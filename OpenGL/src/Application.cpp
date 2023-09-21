@@ -4,11 +4,8 @@
 #include <string>
 #include <fstream>
 #include "Renderer.h"
-#include "IndexBuffer.h"
 #include "Shader.h"
 #include "Texture.h"
-#include "VertexArray.h"
-#include "VertexBuffer.h"
 #include "Camera.h"
 #include "vendor/imgui/imgui.h"
 #include "vendor/imgui/imgui_impl_glfw.h"
@@ -77,8 +74,7 @@ int main()
 	    return -1;
 	}  
 	glfwSwapInterval(1);
-	glViewport(0, 0, 800, 600);
-
+	glViewport(0, 0, width, height);
 	std::cout << glGetString(GL_VERSION);
 
 
@@ -210,7 +206,27 @@ int main()
 		camera.m_focused = show;
 		camera.width = width;
 		camera.height = height;
-		
+
+		{
+			shader.Bind();
+			if(AutoRotate) Rotate(rotation2, prevTime);
+
+			// Initializes matrices so they are not the null matrix
+			glm::mat4 model = glm::mat4(1.0f);
+			
+			glm::mat4 cam_mat4 = camera.Matrix(camera_angle, 0.1f, 100.f);
+			model = glm::rotate(model, glm::radians(rotation2), glm::vec3(0.0f, 1.0f, 0.0f));
+			glm::mat4 mvp = cam_mat4 * model;
+			mvp = glm::translate(mvp, glm::vec3(0.f,2.f,0.f));
+			mvp = glm::scale(mvp, glm::vec3(scaleCubeB));
+
+
+			shader.SetUniformMat4f("u_mvp", mvp);
+			
+			//shader.SetUniform1f("scale",1.f);
+			texture.Bind();
+			renderer.DrawPyramid(shader);
+		}
 		{
 			shader.Bind();
 			if(AutoRotate) Rotate(rotation1, prevTime);
@@ -231,26 +247,6 @@ int main()
 			renderer.DrawCube(shader);
 			shader.UnBind();
 			texture.UnBind();
-		}
-		{
-			shader.Bind();
-			if(AutoRotate) Rotate(rotation2, prevTime);
-
-			// Initializes matrices so they are not the null matrix
-			glm::mat4 model = glm::mat4(1.0f);
-			
-			glm::mat4 cam_mat4 = camera.Matrix(camera_angle, 0.1f, 100.f);
-			model = glm::rotate(model, glm::radians(rotation2), glm::vec3(0.0f, 1.0f, 0.0f));
-			glm::mat4 mvp = cam_mat4 * model;
-			mvp = glm::translate(mvp, glm::vec3(0.f,2.f,0.f));
-			mvp = glm::scale(mvp, glm::vec3(scaleCubeB));
-
-
-			shader.SetUniformMat4f("u_mvp", mvp);
-			
-			//shader.SetUniform1f("scale",1.f);
-			texture.Bind();
-			renderer.DrawPyramid(shader);
 		}
 		if(show)
 		{
