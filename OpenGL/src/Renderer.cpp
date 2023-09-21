@@ -81,6 +81,104 @@ void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib, const Shader& 
 	glDrawElements(GL_TRIANGLES, ib.GetCount(),GL_UNSIGNED_INT, 0);
 }
 
+void Renderer::DrawCube(const Shader& shader)
+{
+	position =
+	{ // COORDINATES                 
+		
+		//CUBE
+		 0.5f, 0.5f,  0.5f,		1.f, 0.f, 0.f,	0.0f, 0.0f,
+		-0.5f, 0.5f,  0.5f,		0.f, 1.f, 0.f,	5.0f, 0.0f, 
+		-0.5f,-0.5f,  0.5f,		0.f, 0.f, 1.f,	0.0f, 0.0f,
+		0.5f,  -0.5f,  0.5f,	1.f, 1.f, 1.f,	5.0f, 0.0f,
+		// back
+		 0.5,  0.5, -0.5,		1.f, 0.f, 0.f,	0.0f, 0.0f,
+		-0.5,  0.5, -0.5,		0.f, 1.f, 0.f,	5.0f, 0.0f,
+		 -0.5, -0.5, -0.5,		0.f, 0.f, 1.f,	0.0f, 0.0f,
+		 0.5, -0.5, -0.5,		1.f, 1.f, 1.f,	5.0f, 0.0f
+	};
+	indices = {
+		//CUBE
+		0, 1, 2,
+		2, 3, 0,
+
+      // Right
+      0, 3, 7,
+      7, 4, 0,
+
+      // Bottom
+      2, 6, 7,
+      7, 3, 2,
+
+      // Left
+      1, 5, 6,
+      6, 2, 1,
+
+      // Back
+      4, 7, 6,
+      6, 5, 4,
+
+      // Top
+      5, 1, 0,
+      0, 4, 5,
+	};
+	VertexArray va;
+
+	VertexBuffer vb(position.data(), 4 * position.size());
+
+	VertexBufferLayout layout;
+	layout.Push<float>(3);
+	layout.Push<float>(3);
+	layout.Push<float>(2);
+	va.AddBuffer(vb, layout);
+
+	IndexBuffer ib(indices.data(), indices.size()); 
+	shader.Bind();
+	va.Bind();
+	ib.Bind();
+	glDrawElements(GL_TRIANGLES, ib.GetCount(),GL_UNSIGNED_INT, 0);
+}
+
+void Renderer::DrawPyramid(const Shader& shader)
+{
+	position =
+	{ // COORDINATES                 
+	
+		-0.5f, 0.0f,  0.5f,     0.f, 1.f, 0.f,	0.0f, 0.0f,
+		-0.5f, 0.0f, -0.5f,     0.f, 0.f, 1.f,	5.0f, 0.0f,
+		 0.5f, 0.0f, -0.5f,     1.f, 0.f, 0.f,	0.0f, 0.0f,
+		 0.5f, 0.0f,  0.5f,     0.f, 1.f, 0.f,	5.0f, 0.0f,
+		 0.0f, 0.8f,  0.0f,     0.f, 0.f, 1.f,	2.5f, 5.0f
+	};
+	indices = {
+		//PYRAMID
+		0, 1, 2,
+		0, 2, 3,
+		0, 1, 4,
+		1, 2, 4,
+		2, 3, 4,
+		3, 0, 4
+	
+   };
+	VertexArray va;
+
+	VertexBuffer vb(position.data(), 4 * position.size());
+
+	VertexBufferLayout layout;
+	layout.Push<float>(3);
+	layout.Push<float>(3);
+	layout.Push<float>(2);
+	
+
+	va.AddBuffer(vb, layout);
+
+	IndexBuffer ib(indices.data(), indices.size()); 
+	shader.Bind();
+	va.Bind();
+	ib.Bind();
+	glDrawElements(GL_TRIANGLES, ib.GetCount(),GL_UNSIGNED_INT, 0);
+}
+
 void APIENTRY openglCallbackFunction(GLenum source,
                                      GLenum type,
                                      GLuint id,

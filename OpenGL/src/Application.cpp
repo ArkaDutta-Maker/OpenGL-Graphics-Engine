@@ -43,7 +43,7 @@ void Rotate(float& rotation, double& prevTime)
 		}
 		if (crntTime - prevTime >= 1 / 60 && rotation <= 360.f)
 		{
-			rotation += 0.5f;
+			rotation += 1.f;
 			prevTime = crntTime;
 		}
 }
@@ -134,21 +134,6 @@ int main()
       0, 4, 5,
 	};
 
-
-
-	VertexArray va;
-
-	VertexBuffer vb(position, 4 * sizeof(position));
-
-	VertexBufferLayout layout;
-	layout.Push<float>(3);
-	layout.Push<float>(3);
-	layout.Push<float>(2);
-	va.AddBuffer(vb, layout);
-
-	IndexBuffer ib(indices, sizeof(indices));
-
-
 	glm::mat4 model(1.0f);
 	glm::mat4 view (1.0f);
 	glm::mat4 proj (1.0f);
@@ -161,12 +146,10 @@ int main()
 	shader.SetUniform1f("scale",1.f);
 
 	Texture texture("res/Texture/brick.png");
-	texture.Bind();shader.SetUniform1i("tex0", 0);
+	texture.Bind();
+	shader.SetUniform1i("tex0", 0);
 	// float r = 0.f;
 	// float increment = 0.05f;
-	va.Unbind();
-	vb.UnBind();
-	ib.UnBind();
 	shader.UnBind();
 	Renderer renderer;
 
@@ -193,14 +176,18 @@ int main()
 	glfwSwapInterval(1);
 	// Enables the Depth Buffer
 	glEnable(GL_DEPTH_TEST);
+
 	float rotation1 = 0.0f;
 	float rotation2= 0.0f;
+
 	//double prevTime = glfwGetTime();
 	bool Wireframe =false;
 
 	Camera camera(width,height, glm::vec3(0.0f, 0.0f, 2.0f));
 	float scaleCubeA = 1.f;
 	float scaleCubeB = 1.f;
+	bool AutoRotate = false;
+	double prevTime = glfwGetTime();
 	while (!glfwWindowShouldClose(window))
 	{
 		
@@ -213,19 +200,20 @@ int main()
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		//Rotate(rotation, prevTime);
 		
 		ImGui::Begin("Alert", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
-		ImGui::Text("Press R to view Rotation Manuals");
+		ImGui::Text("Press R for toolbox");
+		ImGui::SetNextWindowSize(ImVec2(500.f,100.f));
 		ImGui::End();
 		
 		camera.Inputs(window);
 		camera.m_focused = show;
 		camera.width = width;
 		camera.height = height;
+		
 		{
 			shader.Bind();
-
+			if(AutoRotate) Rotate(rotation1, prevTime);
 			// Initializes matrices so they are not the null matrix
 			glm::mat4 model = glm::mat4(1.0f);
 			
@@ -240,11 +228,13 @@ int main()
 			
 			//shader.SetUniform1f("scale",1.f);
 			texture.Bind();
-			renderer.Draw(va,ib,shader);
+			renderer.DrawCube(shader);
 			shader.UnBind();
+			texture.UnBind();
 		}
 		{
 			shader.Bind();
+			if(AutoRotate) Rotate(rotation2, prevTime);
 
 			// Initializes matrices so they are not the null matrix
 			glm::mat4 model = glm::mat4(1.0f);
@@ -260,18 +250,19 @@ int main()
 			
 			//shader.SetUniform1f("scale",1.f);
 			texture.Bind();
-			renderer.Draw(va,ib,shader);
+			renderer.DrawPyramid(shader);
 		}
 		if(show)
 		{
 			
-			ImGui::Begin("Rotate Cube(Press R to Hide)",0);
-			ImGui::SliderFloat("Rotate Cube 1", &rotation1,0.f,360.f);
-			ImGui::SliderFloat("Rotate Cube 2", &rotation2,0.f,360.f);
-			ImGui::SliderFloat("Scale Cube 1", &scaleCubeA,0.f,100.f);
-			ImGui::SliderFloat("Scale Cube 2", &scaleCubeB,0.f,100.f);
+			ImGui::Begin("Toolbox(Press R to Hide)",0);
+			ImGui::SliderFloat("Rotate Item 1", &rotation1,0.f,360.f);
+			ImGui::SliderFloat("Rotate Item 2", &rotation2,0.f,360.f);
+			ImGui::SliderFloat("Scale Item 1", &scaleCubeA,0.5f,100.f);
+			ImGui::SliderFloat("Scale Item 2", &scaleCubeB,0.5f,100.f);
 			ImGui::SliderFloat("FOV", &camera_angle,0.f,360.f);
 			ImGui::Checkbox("WireFrame",&Wireframe );
+			ImGui::Checkbox("Auto Rotate",&AutoRotate );
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 			
 			ImGui::End();
@@ -292,7 +283,7 @@ int main()
 		// 				
   //           ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 		// 	ImGui::End();
-  //       }
+        //}
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
