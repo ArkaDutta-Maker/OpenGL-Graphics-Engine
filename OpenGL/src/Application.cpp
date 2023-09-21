@@ -193,17 +193,18 @@ int main()
 	glfwSwapInterval(1);
 	// Enables the Depth Buffer
 	glEnable(GL_DEPTH_TEST);
-	float rotation = 0.0f;
+	float rotation1 = 0.0f;
+	float rotation2= 0.0f;
 	//double prevTime = glfwGetTime();
 	bool Wireframe =false;
 
 	Camera camera(width,height, glm::vec3(0.0f, 0.0f, 2.0f));
-
+	float scaleCubeA = 1.f;
+	float scaleCubeB = 1.f;
 	while (!glfwWindowShouldClose(window))
 	{
 		
 		processInput(window);
-		
 
 		renderer.Clear();
 		Wireframe ? glPolygonMode(GL_FRONT_AND_BACK, GL_LINE): glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -222,7 +223,6 @@ int main()
 		camera.m_focused = show;
 		camera.width = width;
 		camera.height = height;
-
 		{
 			shader.Bind();
 
@@ -230,11 +230,12 @@ int main()
 			glm::mat4 model = glm::mat4(1.0f);
 			
 			glm::mat4 cam_mat4 = camera.Matrix(camera_angle, 0.1f, 100.f);
-			model = glm::rotate(model, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
+			model = glm::rotate(model, glm::radians(rotation1), glm::vec3(0.0f, 1.0f, 0.0f));
 			
+
 			glm::mat4 mvp = cam_mat4 * model;
 
-
+			mvp = glm::scale(mvp, glm::vec3(scaleCubeA));
 			shader.SetUniformMat4f("u_mvp", mvp);
 			
 			//shader.SetUniform1f("scale",1.f);
@@ -249,10 +250,10 @@ int main()
 			glm::mat4 model = glm::mat4(1.0f);
 			
 			glm::mat4 cam_mat4 = camera.Matrix(camera_angle, 0.1f, 100.f);
-			model = glm::rotate(model, glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f));
-			
+			model = glm::rotate(model, glm::radians(rotation2), glm::vec3(0.0f, 1.0f, 0.0f));
 			glm::mat4 mvp = cam_mat4 * model;
 			mvp = glm::translate(mvp, glm::vec3(0.f,2.f,0.f));
+			mvp = glm::scale(mvp, glm::vec3(scaleCubeB));
 
 
 			shader.SetUniformMat4f("u_mvp", mvp);
@@ -265,7 +266,10 @@ int main()
 		{
 			
 			ImGui::Begin("Rotate Cube(Press R to Hide)",0);
-			ImGui::SliderFloat("Rotate Cube", &rotation,0.f,360.f);
+			ImGui::SliderFloat("Rotate Cube 1", &rotation1,0.f,360.f);
+			ImGui::SliderFloat("Rotate Cube 2", &rotation2,0.f,360.f);
+			ImGui::SliderFloat("Scale Cube 1", &scaleCubeA,0.f,100.f);
+			ImGui::SliderFloat("Scale Cube 2", &scaleCubeB,0.f,100.f);
 			ImGui::SliderFloat("FOV", &camera_angle,0.f,360.f);
 			ImGui::Checkbox("WireFrame",&Wireframe );
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
