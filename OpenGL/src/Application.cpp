@@ -1,4 +1,5 @@
 #include <glad/glad.h>
+
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <string>
@@ -10,9 +11,17 @@
 #include "vendor/imgui/imgui.h"
 #include "vendor/imgui/imgui_impl_glfw.h"
 #include "vendor/imgui/imgui_impl_opengl3.h"
+
 int width = 800;
 int height = 800;
 bool show = false;
+
+//TODO:-
+//1)  IMPLEMENT DrawSphere();(TBD)
+//2) IMPLEMENT AddCubes();(TBD)
+//3) Implement Ligting;(Doing)
+
+
 void processInput(GLFWwindow *window)
 {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -199,9 +208,18 @@ int main()
 		
 		ImGui::Begin("Alert", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
 		ImGui::Text("Press R for toolbox");
-		ImGui::SetNextWindowSize(ImVec2(500.f,100.f));
-		ImGui::End();
 		
+
+		ImGui::End();
+
+		ImGui::Begin("Transparent",0, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar);
+		
+        ImGui::TextColored(ImVec4(1.f,1.f,1.f,1.f),"FPS: %.1f",  io.Framerate);
+		ImGui::SetWindowPos(ImVec2(0,width));
+		ImGui::End();
+
+		ImGui::SetNextWindowSize(ImVec2(500.f,100.f));
+
 		camera.Inputs(window);
 		camera.m_focused = show;
 		camera.width = width;
@@ -248,6 +266,8 @@ int main()
 			shader.UnBind();
 			texture.UnBind();
 		}
+		renderer.DrawSphere(); //Implementation Not done yet
+
 		if(show)
 		{
 			
@@ -259,27 +279,10 @@ int main()
 			ImGui::SliderFloat("FOV", &camera_angle,0.f,360.f);
 			ImGui::Checkbox("WireFrame",&Wireframe );
 			ImGui::Checkbox("Auto Rotate",&AutoRotate );
-			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 			
 			ImGui::End();
 		}	
 
-		
-		
-		//std::cout<< "FOCUSED: " << show ;
-
-
-		// {
-		// 	 ImGui::SetWindowSize(ImVec2(50.f, 50.f));
-  //
-  //
-  //           ImGui::Begin("Translate Image",0);
-  //           ImGui::SliderFloat3("TranslationA", glm::value_ptr(translationA),0.f,960.f);
-  //           ImGui::SliderFloat3("TranslationB", glm::value_ptr(translationB),0.f,960.f);
-		// 				
-  //           ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-		// 	ImGui::End();
-        //}
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

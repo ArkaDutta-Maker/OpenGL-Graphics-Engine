@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "glm/ext/scalar_constants.hpp"
+
 static std::string DebugConvertSeverityToString(GLenum severity)
 {
 	switch (severity)
@@ -177,6 +179,12 @@ void Renderer::DrawPyramid(const Shader& shader)
 	va.Bind();
 	ib.Bind();
 	glDrawElements(GL_TRIANGLES, ib.GetCount(),GL_UNSIGNED_INT, 0);
+}
+
+void Renderer::DrawSphere()
+{
+	//TODO:- IMPLEMENT DrawSphere();
+
 }
 
 void APIENTRY openglCallbackFunction(GLenum source,

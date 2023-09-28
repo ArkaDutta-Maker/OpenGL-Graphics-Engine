@@ -31,4 +31,5 @@ public:
 	void Draw(const VertexArray& va, const IndexBuffer& ib, const Shader& shader) const;
 	void DrawCube(const Shader& shader);
 	void DrawPyramid(const Shader& shader);
+    void DrawSphere();
 };
