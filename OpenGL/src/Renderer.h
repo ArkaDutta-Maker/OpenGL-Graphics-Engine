@@ -1,11 +1,17 @@
 #pragma once
 
 #include <glad/glad.h>
+#include <iostream>
+#include <vector>
 
-#include "IndexBuffer.h"
-#include "Shader.h"
-#include "VertexArray.h"
+#include "glm/vec3.hpp"
 
+class Camera;
+class Shader;
+class VertexArray;
+class IndexBuffer;
+
+class Texture;
 #define Break __debugbreak()
 
 void APIENTRY openglCallbackFunction(GLenum source,
@@ -24,12 +30,15 @@ static std::string DebugConvertTypeToString(GLenum type);
 class Renderer
 {
 private:
-    std::vector<GLfloat> position;
+	std::vector<GLfloat> position;
 	std::vector<unsigned int> indices;
+
 public:
+
 	void Clear();
 	void Draw(const VertexArray& va, const IndexBuffer& ib, const Shader& shader) const;
 	void DrawCube(const Shader& shader);
 	void DrawPyramid(const Shader& shader);
-    void DrawSphere();
+	void DrawSphere();
+	void AddObject(Shader& shader, Texture& texture, Camera& camera, float camera_angle, float Rotation, float scaleVal, glm::vec3 location);
 };

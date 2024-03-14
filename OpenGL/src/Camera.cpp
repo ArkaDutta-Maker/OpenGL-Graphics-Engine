@@ -1,24 +1,27 @@
 #include "Camera.h"
+#include<glm/gtx/vector_angle.hpp>
+#include "glm/gtc/type_ptr.inl"
 
 Camera::Camera(int width, int height, glm::vec3 position)
 {
 	Camera::width = width;
 	Camera::height = height;
 	Position = position;
+	
+	// Initializes matrices since otherwise they will be the null matrix
+	view = glm::mat4(1.0f);
+	proj = glm::mat4(1.0f);
+
 }
 
-glm::mat4 Camera::Matrix(float FOVdeg, float nearPlane, float farPlane)
-{
-	// Initializes matrices since otherwise they will be the null matrix
-	glm::mat4 view = glm::mat4(1.0f);
-	glm::mat4 projection = glm::mat4(1.0f);
+glm::mat4 Camera::Matrix(float FOVdeg, float nearPlane, float farPlane){
 
 	// Makes camera look in the right direction from the right position
 	view = glm::lookAt(Position, Position + Orientation, Up);
 	// Adds perspective to the scene
-	projection = glm::perspective(glm::radians(FOVdeg), (float)width / height, nearPlane, farPlane);
+	proj = glm::perspective(glm::radians(FOVdeg), (float)width / height, nearPlane, farPlane);
 
-	glm::mat4 cam  = projection * view;
+	glm::mat4 cam  = proj * view;
 	return cam;
 }
 
@@ -42,14 +45,6 @@ void Camera::Inputs(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 	{
 		Position += speed * glm::normalize(glm::cross(Orientation, Up));
-	}
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-	{
-		Position += speed * Up;
-	}
-	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-	{
-		Position += speed * -Up;
 	}
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 	{

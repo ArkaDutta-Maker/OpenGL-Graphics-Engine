@@ -11,6 +11,8 @@
 #include "vendor/imgui/imgui.h"
 #include "vendor/imgui/imgui_impl_glfw.h"
 #include "vendor/imgui/imgui_impl_opengl3.h"
+#include<glm/gtx/vector_angle.hpp>
+#include "glm/gtc/type_ptr.inl"
 
 int width = 800;
 int height = 800;
@@ -52,6 +54,9 @@ void Rotate(float& rotation, double& prevTime)
 			rotation += 1.f;
 			prevTime = crntTime;
 		}
+}
+void OnMouse(GLFWwindow* window, double xpos, double ypos){
+
 }
 int main()
 {
@@ -139,10 +144,9 @@ int main()
       0, 4, 5,
 	};
 
-	glm::mat4 model(1.0f);
-	glm::mat4 view (1.0f);
-	glm::mat4 proj (1.0f);
-	glm::mat4 mvp = model*view*proj;
+	
+	glm::mat4 mvp = glm::mat4(1.f);
+
 	Shader shader("res/Shader/Frag.frag","res/Shader/Vertex.vert");
 	shader.Bind();
 
@@ -174,8 +178,14 @@ int main()
 
 	glCheckError();
 
+
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetKeyCallback(window, key_callback);
+	//glfwSetCursorPosCallback(window, OnMouse);
+
+
+
+
 
 	float camera_angle = 90.f;
 	glfwSwapInterval(1);
@@ -193,6 +203,7 @@ int main()
 	float scaleCubeB = 1.f;
 	bool AutoRotate = false;
 	double prevTime = glfwGetTime();
+
 	while (!glfwWindowShouldClose(window))
 	{
 		
@@ -205,13 +216,13 @@ int main()
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		
-		ImGui::Begin("Alert", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
-		ImGui::Text("Press R for toolbox");
-		
 
-		ImGui::End();
-
+		if(!show)
+		{
+			ImGui::Begin("Alert", 0, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize);
+			ImGui::Text("Press R for toolbox");
+			ImGui::End();
+		}
 		ImGui::Begin("Transparent",0, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar);
 		
         ImGui::TextColored(ImVec4(1.f,1.f,1.f,1.f),"FPS: %.1f",  io.Framerate);
@@ -224,53 +235,14 @@ int main()
 		camera.m_focused = show;
 		camera.width = width;
 		camera.height = height;
-
-		{
-			shader.Bind();
-			if(AutoRotate) Rotate(rotation2, prevTime);
-
-			// Initializes matrices so they are not the null matrix
-			glm::mat4 model = glm::mat4(1.0f);
-			
-			glm::mat4 cam_mat4 = camera.Matrix(camera_angle, 0.1f, 100.f);
-			model = glm::rotate(model, glm::radians(rotation2), glm::vec3(0.0f, 1.0f, 0.0f));
-			glm::mat4 mvp = cam_mat4 * model;
-			mvp = glm::translate(mvp, glm::vec3(0.f,2.f,0.f));
-			mvp = glm::scale(mvp, glm::vec3(scaleCubeB));
-
-
-			shader.SetUniformMat4f("u_mvp", mvp);
-			
-			//shader.SetUniform1f("scale",1.f);
-			texture.Bind();
-			renderer.DrawPyramid(shader);
-		}
-		{
-			shader.Bind();
-			if(AutoRotate) Rotate(rotation1, prevTime);
-			// Initializes matrices so they are not the null matrix
-			glm::mat4 model = glm::mat4(1.0f);
-			
-			glm::mat4 cam_mat4 = camera.Matrix(camera_angle, 0.1f, 100.f);
-			model = glm::rotate(model, glm::radians(rotation1), glm::vec3(0.0f, 1.0f, 0.0f));
-			
-
-			glm::mat4 mvp = cam_mat4 * model;
-
-			mvp = glm::scale(mvp, glm::vec3(scaleCubeA));
-			shader.SetUniformMat4f("u_mvp", mvp);
-			
-			//shader.SetUniform1f("scale",1.f);
-			texture.Bind();
-			renderer.DrawCube(shader);
-			shader.UnBind();
-			texture.UnBind();
-		}
-		renderer.DrawSphere(); //Implementation Not done yet
+		
+		renderer.AddObject(shader, texture, camera, camera_angle, rotation1, scaleCubeA, glm::vec3(0.f,2.f,0.f));
+		
+		renderer.AddObject(shader, texture, camera, camera_angle, rotation2, scaleCubeB, glm::vec3(0.f,0.f,0.f));
+		
 
 		if(show)
 		{
-			
 			ImGui::Begin("Toolbox(Press R to Hide)",0);
 			ImGui::SliderFloat("Rotate Item 1", &rotation1,0.f,360.f);
 			ImGui::SliderFloat("Rotate Item 2", &rotation2,0.f,360.f);
@@ -282,7 +254,6 @@ int main()
 			
 			ImGui::End();
 		}	
-
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

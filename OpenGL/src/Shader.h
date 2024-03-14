@@ -1,8 +1,8 @@
 #pragma once
-#include <string>
-#include <unordered_map>
-#include <tuple>
 #include <glm/glm.hpp>
+#include <string>
+#include <tuple>
+#include <unordered_map>
 
 std::string get_file_contents(const char* filename);
 

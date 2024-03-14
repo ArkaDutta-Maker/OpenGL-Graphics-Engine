@@ -1,8 +1,11 @@
 #include "Renderer.h"
-
-#include <iostream>
-
-#include "glm/ext/scalar_constants.hpp"
+#include <Texture.h>
+#include "IndexBuffer.h"
+#include "Shader.h"
+#include "VertexArray.h"
+#include <glm/gtx/vector_angle.hpp>
+#include "glm/gtc/type_ptr.inl"
+#include "Camera.h"
 
 static std::string DebugConvertSeverityToString(GLenum severity)
 {
@@ -185,6 +188,32 @@ void Renderer::DrawSphere()
 {
 	//TODO:- IMPLEMENT DrawSphere();
 
+}
+
+void Renderer::AddObject(Shader& shader, Texture& texture, Camera& camera, float camera_angle, float Rotation, float scaleVal, glm::vec3 location)
+{
+	shader.Bind();
+	/*
+	if(AutoRotate) Rotate(rotation2, prevTime);
+	*/
+
+	// Initializes matrices so they are not the null matrix
+	glm::mat4 model = glm::mat4(1.0f);
+	
+	glm::mat4 cam_mat4 = camera.Matrix(camera_angle, 0.1f, 100.f);
+	model = glm::rotate(model, glm::radians(Rotation), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 mvp = cam_mat4 * model;
+	mvp = glm::translate(mvp, location);
+	mvp = glm::scale(mvp, glm::vec3(scaleVal));
+
+
+	shader.SetUniformMat4f("u_mvp", mvp);
+
+	
+
+	//shader.SetUniform1f("scale",1.f);
+	texture.Bind();
+	DrawCube(shader);
 }
 
 void APIENTRY openglCallbackFunction(GLenum source,

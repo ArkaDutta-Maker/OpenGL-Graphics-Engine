@@ -2,10 +2,6 @@
 #include<glad/glad.h>
 #include<GLFW/glfw3.h>
 #include<glm/glm.hpp>
-#include<glm/gtc/matrix_transform.hpp>
-
-#include<glm/gtx/vector_angle.hpp>
-#include "glm/gtc/type_ptr.inl"
 
 class Camera
 {
@@ -14,7 +10,8 @@ public:
 	glm::vec3 Position;
 	glm::vec3 Orientation = glm::vec3(0.0f, 0.0f, -1.0f);
 	glm::vec3 Up = glm::vec3(0.0f, 1.0f, 0.0f);
-
+	glm::mat4 view;
+	glm::mat4 proj;
 	// Prevents the camera from jumping around when first clicking left click
 	bool firstClick = true;
 	bool m_focused  = false;
