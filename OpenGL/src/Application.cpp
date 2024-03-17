@@ -203,7 +203,10 @@ int main()
 	float scaleCubeB = 1.f;
 	bool AutoRotate = false;
 	double prevTime = glfwGetTime();
-
+	renderer.AddObject(shader, texture, camera, camera_angle, rotation1, scaleCubeA, glm::vec3(0.f,0.f,0.f), Shape::Cube);
+	// 	
+	// renderer.AddObject(shader, texture, camera, camera_angle, rotation2, scaleCubeB, glm::vec3(0.f,1.f,0.f), Shape::Pyramid);
+	int i = 1;
 	while (!glfwWindowShouldClose(window))
 	{
 		
@@ -223,6 +226,12 @@ int main()
 			ImGui::Text("Press R for toolbox");
 			ImGui::End();
 		}
+		if(ImGui::Button("+ Box"))
+		{
+			
+			renderer.AddObject(shader, texture, camera, camera_angle, rotation1, scaleCubeA, glm::vec3(0.f,i,0.f), Shape::Cube);
+			i++;
+		}
 		ImGui::Begin("Transparent",0, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar);
 		
         ImGui::TextColored(ImVec4(1.f,1.f,1.f,1.f),"FPS: %.1f",  io.Framerate);
@@ -236,9 +245,7 @@ int main()
 		camera.width = width;
 		camera.height = height;
 		
-		renderer.AddObject(shader, texture, camera, camera_angle, rotation1, scaleCubeA, glm::vec3(0.f,2.f,0.f));
-		
-		renderer.AddObject(shader, texture, camera, camera_angle, rotation2, scaleCubeB, glm::vec3(0.f,0.f,0.f));
+		renderer.Draw(shader);
 		
 
 		if(show)

@@ -1,11 +1,11 @@
-#include "Renderer.h"
-#include <Texture.h>
+#include "Camera.h"
+#include "glm/gtc/type_ptr.inl"
 #include "IndexBuffer.h"
+#include "Renderer.h"
 #include "Shader.h"
 #include "VertexArray.h"
 #include <glm/gtx/vector_angle.hpp>
-#include "glm/gtc/type_ptr.inl"
-#include "Camera.h"
+#include <Texture.h>
 
 static std::string DebugConvertSeverityToString(GLenum severity)
 {
@@ -78,12 +78,37 @@ void Renderer::Clear()
 
 
 
-void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib, const Shader& shader) const
+void Renderer::Draw(Shader& shader) 
 {
-	shader.Bind();
-	va.Bind();
-	ib.Bind();
-	glDrawElements(GL_TRIANGLES, ib.GetCount(),GL_UNSIGNED_INT, 0);
+	for (auto& m_Object : m_Objects)
+	{
+		glm::mat4 model = glm::mat4(1.0f);
+		
+		glm::mat4 cam_mat4 = m_Object.camera.Matrix(m_Object.camera_angle, 0.1f, 100.f);
+		model = glm::rotate(model, glm::radians(m_Object.Rotation), glm::vec3(0.0f, 1.0f, 0.0f));
+		
+		glm::mat4 mvp = m_Object.mvp;
+		mvp = cam_mat4 * model;
+		mvp = glm::translate(mvp, m_Object.location);
+
+		mvp = glm::scale(mvp, glm::vec3(m_Object.scaleVal));
+
+		shader.SetUniformMat4f("u_mvp", mvp);
+		switch(m_Object.shape)
+		{
+			case Shape::Cube:
+				DrawCube(shader);
+				break;
+			case Shape::Pyramid:
+				DrawPyramid(shader);
+				break;
+			case Shape::Sphere:
+				DrawSphere();
+				break;
+			default:
+				break;
+		}
+	}
 }
 
 void Renderer::DrawCube(const Shader& shader)
@@ -186,18 +211,13 @@ void Renderer::DrawPyramid(const Shader& shader)
 
 void Renderer::DrawSphere()
 {
-	//TODO:- IMPLEMENT DrawSphere();
 
 }
 
-void Renderer::AddObject(Shader& shader, Texture& texture, Camera& camera, float camera_angle, float Rotation, float scaleVal, glm::vec3 location)
+void Renderer::AddObject(Shader& shader, Texture& texture, Camera& camera, float& camera_angle, float& Rotation, float& scaleVal, glm::vec3 location, Shape shape)
 {
 	shader.Bind();
-	/*
-	if(AutoRotate) Rotate(rotation2, prevTime);
-	*/
 
-	// Initializes matrices so they are not the null matrix
 	glm::mat4 model = glm::mat4(1.0f);
 	
 	glm::mat4 cam_mat4 = camera.Matrix(camera_angle, 0.1f, 100.f);
@@ -206,14 +226,7 @@ void Renderer::AddObject(Shader& shader, Texture& texture, Camera& camera, float
 	mvp = glm::translate(mvp, location);
 	mvp = glm::scale(mvp, glm::vec3(scaleVal));
 
-
-	shader.SetUniformMat4f("u_mvp", mvp);
-
-	
-
-	//shader.SetUniform1f("scale",1.f);
-	texture.Bind();
-	DrawCube(shader);
+	m_Objects.push_back({mvp, shape, camera_angle, Rotation, scaleVal, camera, location});
 }
 
 void APIENTRY openglCallbackFunction(GLenum source,
