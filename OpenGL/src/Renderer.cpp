@@ -5,6 +5,7 @@
 #include "Shader.h"
 #include "VertexArray.h"
 #include <glm/gtx/vector_angle.hpp>
+#include <limits>
 #include <Texture.h>
 
 static std::string DebugConvertSeverityToString(GLenum severity)
@@ -78,20 +79,16 @@ void Renderer::Clear()
 
 
 
-void Renderer::Draw(Shader& shader) 
+void Renderer::Draw(Shader& shader, Camera& camera, float camera_angle) 
 {
+    glm::mat4 cam_mat4 = camera.Matrix(camera_angle, 0.1f, 100.f);
 	for (auto& m_Object : m_Objects)
 	{
 		glm::mat4 model = glm::mat4(1.0f);
-		
-		glm::mat4 cam_mat4 = m_Object.camera.Matrix(m_Object.camera_angle, 0.1f, 100.f);
-		model = glm::rotate(model, glm::radians(m_Object.Rotation), glm::vec3(0.0f, 1.0f, 0.0f));
-		
-		glm::mat4 mvp = m_Object.mvp;
-		mvp = cam_mat4 * model;
-		mvp = glm::translate(mvp, m_Object.location);
-
-		mvp = glm::scale(mvp, glm::vec3(m_Object.scaleVal));
+		model = glm::translate(model, m_Object.location);
+		model = glm::rotate(model, glm::radians(m_Object.rotationY), glm::vec3(0.0f, 1.0f, 0.0f));
+		model = glm::scale(model, glm::vec3(m_Object.scaleVal));
+		glm::mat4 mvp = cam_mat4 * model;
 
 		shader.SetUniformMat4f("u_mvp", mvp);
 		switch(m_Object.shape)
@@ -214,19 +211,68 @@ void Renderer::DrawSphere()
 
 }
 
-void Renderer::AddObject(Shader& shader, Texture& texture, Camera& camera, float& camera_angle, float& Rotation, float& scaleVal, glm::vec3 location, Shape shape)
+int Renderer::AddObject(Shape shape, const glm::vec3& location, float rotationY, float scaleVal)
 {
-	shader.Bind();
+  const int objectId = m_NextObjectId++;
+	m_Objects.push_back({objectId, shape, rotationY, scaleVal, location});
+	return objectId;
+}
 
-	glm::mat4 model = glm::mat4(1.0f);
-	
-	glm::mat4 cam_mat4 = camera.Matrix(camera_angle, 0.1f, 100.f);
-	model = glm::rotate(model, glm::radians(Rotation), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 mvp = cam_mat4 * model;
-	mvp = glm::translate(mvp, location);
-	mvp = glm::scale(mvp, glm::vec3(scaleVal));
+std::vector<Info>& Renderer::GetObjects()
+{
+	return m_Objects;
+}
 
-	m_Objects.push_back({mvp, shape, camera_angle, Rotation, scaleVal, camera, location});
+Info* Renderer::GetObjectById(int id)
+{
+	for (auto& object : m_Objects)
+	{
+		if (object.id == id)
+			return &object;
+	}
+
+	return nullptr;
+}
+
+void Renderer::AutoRotateObjects(float deltaDegrees)
+{
+	for (auto& object : m_Objects)
+	{
+		object.rotationY += deltaDegrees;
+		if (object.rotationY >= 360.0f)
+			object.rotationY -= 360.0f;
+	}
+}
+
+int Renderer::PickObject(const glm::vec3& rayOrigin, const glm::vec3& rayDirection) const
+{
+	float nearestT = std::numeric_limits<float>::max();
+	int selectedId = -1;
+
+	for (const auto& object : m_Objects)
+	{
+		const float radius = 0.9f * object.scaleVal;
+		const glm::vec3 oc = rayOrigin - object.location;
+		const float b = 2.0f * glm::dot(oc, rayDirection);
+		const float c = glm::dot(oc, oc) - (radius * radius);
+		const float discriminant = (b * b) - (4.0f * c);
+
+		if (discriminant < 0.0f)
+			continue;
+
+		const float sqrtDisc = sqrtf(discriminant);
+		const float t0 = (-b - sqrtDisc) * 0.5f;
+		const float t1 = (-b + sqrtDisc) * 0.5f;
+		const float t = (t0 > 0.0f) ? t0 : t1;
+
+		if (t > 0.0f && t < nearestT)
+		{
+			nearestT = t;
+			selectedId = object.id;
+		}
+	}
+
+	return selectedId;
 }
 
 void APIENTRY openglCallbackFunction(GLenum source,
@@ -237,6 +283,9 @@ void APIENTRY openglCallbackFunction(GLenum source,
                                      const GLchar* message,
                                      const void* userParam)
 {
+  if (severity == GL_DEBUG_SEVERITY_NOTIFICATION)
+		return;
+
 	std::cout << "[OpenGL ERROR]\nSource: " << DebugConvertSourceToString(source) << "\nType: " <<
 		DebugConvertTypeToString(type) << "\nID: " << id << "\nSeverity: " << DebugConvertSeverityToString(severity) <<
 		"\nMessage: " << message << std::endl;
@@ -249,4 +298,5 @@ void glCheckError()
 	glEnable(GL_DEBUG_OUTPUT);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	glDebugMessageCallback(openglCallbackFunction, nullptr);
+   glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DEBUG_SEVERITY_NOTIFICATION, 0, nullptr, GL_FALSE);
 }

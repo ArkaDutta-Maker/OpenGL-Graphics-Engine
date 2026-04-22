@@ -362,3 +362,6 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /OpenGL/imgui.ini
+glfw-3.4.bin.WIN64.zip
+glfw-3.4.bin.WIN64/
+build/

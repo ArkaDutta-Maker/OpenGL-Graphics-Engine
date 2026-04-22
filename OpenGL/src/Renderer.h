@@ -33,12 +33,10 @@ enum class Shape
 };
 struct Info
 {
-	glm::mat4 mvp;
+  int id;
 	Shape shape;
-	float& camera_angle;
-	float& Rotation;
-	float& scaleVal;
-	Camera& camera;
+    float rotationY;
+	float scaleVal;
 	glm::vec3 location;
 };
 class Renderer
@@ -47,13 +45,18 @@ private:
 	std::vector<GLfloat> position;
 	std::vector<unsigned int> indices;
 	std::vector<Info> m_Objects;
+ int m_NextObjectId = 1;
 public:
 	// write an enum containing the different shapes
 	
 	void Clear();
-	void Draw(Shader& shader);
+  void Draw(Shader& shader, Camera& camera, float camera_angle);
 	void DrawCube(const Shader& shader);
 	void DrawPyramid(const Shader& shader);
 	void DrawSphere();
-	void AddObject(Shader& shader, Texture& texture, Camera& camera, float& camera_angle, float& Rotation, float& scaleVal, glm::vec3 location, Shape shape);
+   int AddObject(Shape shape, const glm::vec3& location, float rotationY = 0.0f, float scaleVal = 1.0f);
+	std::vector<Info>& GetObjects();
+	Info* GetObjectById(int id);
+	void AutoRotateObjects(float deltaDegrees);
+	int PickObject(const glm::vec3& rayOrigin, const glm::vec3& rayDirection) const;
 };

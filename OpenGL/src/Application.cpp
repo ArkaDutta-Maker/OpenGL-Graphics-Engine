@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <cstdio>
 #include "Renderer.h"
 #include "Shader.h"
 #include "Texture.h"
@@ -12,6 +13,7 @@
 #include "vendor/imgui/imgui_impl_glfw.h"
 #include "vendor/imgui/imgui_impl_opengl3.h"
 #include<glm/gtx/vector_angle.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include "glm/gtc/type_ptr.inl"
 
 int width = 800;
@@ -58,6 +60,26 @@ void Rotate(float& rotation, double& prevTime)
 void OnMouse(GLFWwindow* window, double xpos, double ypos){
 
 }
+
+glm::vec3 ScreenPointToRay(GLFWwindow* window, const Camera& camera, float cameraAngleDeg)
+{
+	double mouseX = 0.0;
+	double mouseY = 0.0;
+	glfwGetCursorPos(window, &mouseX, &mouseY);
+
+	float ndcX = (2.0f * static_cast<float>(mouseX) / static_cast<float>(width)) - 1.0f;
+	float ndcY = 1.0f - (2.0f * static_cast<float>(mouseY) / static_cast<float>(height));
+
+	glm::vec4 rayClip(ndcX, ndcY, -1.0f, 1.0f);
+	glm::mat4 projection = glm::perspective(glm::radians(cameraAngleDeg), static_cast<float>(width) / static_cast<float>(height), 0.1f, 100.0f);
+	glm::vec4 rayEye = glm::inverse(projection) * rayClip;
+	rayEye = glm::vec4(rayEye.x, rayEye.y, -1.0f, 0.0f);
+
+	glm::mat4 view = glm::lookAt(camera.Position, camera.Position + camera.Orientation, camera.Up);
+	glm::vec3 rayWorld = glm::normalize(glm::vec3(glm::inverse(view) * rayEye));
+	return rayWorld;
+}
+
 int main()
 {
 	GLFWwindow* window;
@@ -92,59 +114,6 @@ int main()
 	std::cout << glGetString(GL_VERSION);
 
 
-	GLfloat position[] =
-	{ // COORDINATES                  
-		// -0.5f, 0.0f,  0.5f,     0.f, 1.f, 0.f,	//0.0f, 0.0f,
-		// -0.5f, 0.0f, -0.5f,     0.f, 0.f, 1.f,	//5.0f, 0.0f,
-		//  0.5f, 0.0f, -0.5f,     1.f, 0.f, 0.f,	//0.0f, 0.0f,
-		//  0.5f, 0.0f,  0.5f,     0.f, 1.f, 0.f,	//5.0f, 0.0f,
-		//  0.0f, 0.8f,  0.0f,     0.f, 0.f, 1.f,	//2.5f, 5.0f
-
-		//CUBE
-		 0.5f, 0.5f,  0.5f,		1.f, 0.f, 0.f,	0.0f, 0.0f,
-		-0.5f, 0.5f,  0.5f,		0.f, 1.f, 0.f,	5.0f, 0.0f, 
-		-0.5f,-0.5f,  0.5f,		0.f, 0.f, 1.f,	0.0f, 0.0f,
-		0.5f,  -0.5f,  0.5f,	1.f, 1.f, 1.f,	5.0f, 0.0f,
-		// back
-		 0.5,  0.5, -0.5,		1.f, 0.f, 0.f,	0.0f, 0.0f,
-		-0.5,  0.5, -0.5,		0.f, 1.f, 0.f,	5.0f, 0.0f,
-		 -0.5, -0.5, -0.5,		0.f, 0.f, 1.f,	0.0f, 0.0f,
-		 0.5, -0.5, -0.5,		1.f, 1.f, 1.f,	5.0f, 0.0f
-	};
-	unsigned int indices[] = {
-		//PYRAMID
-		// 0, 1, 2,
-		// 0, 2, 3,
-		// 0, 1, 4,
-		// 1, 2, 4,
-		// 2, 3, 4,
-		// 3, 0, 4
-		//CUBE
-		0, 1, 2,
-		2, 3, 0,
-
-      // Right
-      0, 3, 7,
-      7, 4, 0,
-
-      // Bottom
-      2, 6, 7,
-      7, 3, 2,
-
-      // Left
-      1, 5, 6,
-      6, 2, 1,
-
-      // Back
-      4, 7, 6,
-      6, 5, 4,
-
-      // Top
-      5, 1, 0,
-      0, 4, 5,
-	};
-
-	
 	glm::mat4 mvp = glm::mat4(1.f);
 
 	Shader shader("res/Shader/Frag.frag","res/Shader/Vertex.vert");
@@ -192,25 +161,29 @@ int main()
 	// Enables the Depth Buffer
 	glEnable(GL_DEPTH_TEST);
 
-	float rotation1 = 0.0f;
-	float rotation2= 0.0f;
-
-	//double prevTime = glfwGetTime();
 	bool Wireframe =false;
 
 	Camera camera(width,height, glm::vec3(0.0f, 0.0f, 2.0f));
-	float scaleCubeA = 1.f;
-	float scaleCubeB = 1.f;
 	bool AutoRotate = false;
-	double prevTime = glfwGetTime();
-	renderer.AddObject(shader, texture, camera, camera_angle, rotation1, scaleCubeA, glm::vec3(0.f,0.f,0.f), Shape::Cube);
-	// 	
-	// renderer.AddObject(shader, texture, camera, camera_angle, rotation2, scaleCubeB, glm::vec3(0.f,1.f,0.f), Shape::Pyramid);
+    float autoRotateSpeed = 60.0f;
+	renderer.AddObject(Shape::Cube, glm::vec3(0.f,0.f,0.f));
+	double lastFrameTime = glfwGetTime();
+	bool leftMouseWasDown = false;
+	int selectedObjectId = -1;
 	int i = 1;
 	while (!glfwWindowShouldClose(window))
 	{
 		
 		processInput(window);
+
+		double currentFrameTime = glfwGetTime();
+		float deltaSeconds = static_cast<float>(currentFrameTime - lastFrameTime);
+		lastFrameTime = currentFrameTime;
+
+		if (AutoRotate)
+		{
+            renderer.AutoRotateObjects(autoRotateSpeed * deltaSeconds);
+		}
 
 		renderer.Clear();
 		Wireframe ? glPolygonMode(GL_FRONT_AND_BACK, GL_LINE): glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -226,36 +199,77 @@ int main()
 			ImGui::Text("Press R for toolbox");
 			ImGui::End();
 		}
-		if(ImGui::Button("+ Box"))
-		{
-			
-			renderer.AddObject(shader, texture, camera, camera_angle, rotation1, scaleCubeA, glm::vec3(0.f,i,0.f), Shape::Cube);
-			i++;
-		}
 		ImGui::Begin("Transparent",0, ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoTitleBar);
 		
         ImGui::TextColored(ImVec4(1.f,1.f,1.f,1.f),"FPS: %.1f",  io.Framerate);
 		ImGui::SetWindowPos(ImVec2(0,width));
 		ImGui::End();
 
-		ImGui::SetNextWindowSize(ImVec2(500.f,100.f));
+      ImGui::SetNextWindowSize(ImVec2(500.f,100.f), ImGuiCond_FirstUseEver);
 
 		camera.Inputs(window);
 		camera.m_focused = show;
 		camera.width = width;
 		camera.height = height;
 		
-		renderer.Draw(shader);
+      renderer.Draw(shader, camera, camera_angle);
+
+		const bool leftMouseDown = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+		if (leftMouseDown && !leftMouseWasDown && !io.WantCaptureMouse)
+		{
+			const glm::vec3 rayDirection = ScreenPointToRay(window, camera, camera_angle);
+			const int pickedObject = renderer.PickObject(camera.Position, rayDirection);
+			if (pickedObject != -1)
+			{
+				selectedObjectId = pickedObject;
+			}
+		}
+		leftMouseWasDown = leftMouseDown;
 		
 
 		if(show)
 		{
+         ImGui::SetNextWindowSize(ImVec2(460.f, 360.f), ImGuiCond_FirstUseEver);
 			ImGui::Begin("Toolbox(Press R to Hide)",0);
-			ImGui::SliderFloat("Rotate Item 1", &rotation1,0.f,360.f);
-			ImGui::SliderFloat("Rotate Item 2", &rotation2,0.f,360.f);
-			ImGui::SliderFloat("Scale Item 1", &scaleCubeA,0.5f,100.f);
-			ImGui::SliderFloat("Scale Item 2", &scaleCubeB,0.5f,100.f);
+          if(ImGui::Button("+ Box"))
+			{
+				int col = i % 5;
+				int row = i / 5;
+				glm::vec3 location((col - 2) * 1.5f, 0.f, -row * 1.5f);
+                selectedObjectId = renderer.AddObject(Shape::Cube, location);
+				i++;
+			}
+            ImGui::SameLine();
+			if (ImGui::Button("Clear Selection"))
+			{
+				selectedObjectId = -1;
+			}
+			ImGui::Text("Boxes: %d", i);
+          ImGui::Text("Click a box in the scene to select it");
+			ImGui::Separator();
+
+			for (const auto& object : renderer.GetObjects())
+			{
+				char label[64];
+               std::snprintf(label, sizeof(label), "Box ID %d", object.id);
+				if (ImGui::Selectable(label, selectedObjectId == object.id))
+				{
+					selectedObjectId = object.id;
+				}
+			}
+
+			Info* selectedObject = renderer.GetObjectById(selectedObjectId);
+			if (selectedObject != nullptr)
+			{
+				ImGui::Separator();
+				ImGui::Text("Selected ID: %d", selectedObject->id);
+				ImGui::DragFloat3("Position", glm::value_ptr(selectedObject->location), 0.05f);
+				ImGui::SliderFloat("Rotation", &selectedObject->rotationY, 0.f, 360.f);
+				ImGui::SliderFloat("Scale", &selectedObject->scaleVal, 0.1f, 10.f);
+			}
+
 			ImGui::SliderFloat("FOV", &camera_angle,0.f,360.f);
+           ImGui::SliderFloat("Auto Rotate Speed", &autoRotateSpeed, 0.0f, 360.0f);
 			ImGui::Checkbox("WireFrame",&Wireframe );
 			ImGui::Checkbox("Auto Rotate",&AutoRotate );
 			
