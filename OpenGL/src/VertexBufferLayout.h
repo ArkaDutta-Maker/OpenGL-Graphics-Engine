@@ -13,10 +13,14 @@ struct VertexBufferElement
 	{
 		switch (type)
 		{
-		case GL_FLOAT: return 4;
-		case GL_UNSIGNED_INT: return 4;
-		case GL_UNSIGNED_BYTE: return 1;
-			default: return NULL;
+		case GL_FLOAT:
+			return 4;
+		case GL_UNSIGNED_INT:
+			return 4;
+		case GL_UNSIGNED_BYTE:
+			return 1;
+		default:
+			return NULL;
 		}
 	}
 };
@@ -28,7 +32,7 @@ private:
 	unsigned int m_Stride;
 
 public:
-	VertexBufferLayout(): m_Stride(0)
+	VertexBufferLayout() : m_Stride(0)
 	{
 	}
 

@@ -1,0 +1,42 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 20,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "windows-ninja-debug",
+      "displayName": "Windows Ninja Debug",
+      "description": "Use Ninja generator with Debug build type.",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/ninja-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "windows-vs2022",
+      "displayName": "Windows VS2022",
+      "description": "Use Visual Studio 2022 generator for multi-config builds.",
+      "generator": "Visual Studio 17 2022",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "binaryDir": "${sourceDir}/build/vs2022"
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "build-ninja-debug",
+      "configurePreset": "windows-ninja-debug"
+    },
+    {
+      "name": "build-vs2022-debug",
+      "configurePreset": "windows-vs2022",
+      "configuration": "Debug"
+    }
+  ]
+}

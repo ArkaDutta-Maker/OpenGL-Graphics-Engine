@@ -91,7 +91,7 @@ unsigned int Shader::CompileShader(unsigned int type, const std::string& source)
 
 	return id;
 }
-static std::string get_file_contents(const char* filename) 
+std::string get_file_contents(const char* filename) 
 {
 	std::ifstream in(filename, std::ios::binary);
 	if (in)

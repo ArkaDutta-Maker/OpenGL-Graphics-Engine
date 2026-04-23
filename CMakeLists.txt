@@ -2,14 +2,24 @@ cmake_minimum_required(VERSION 3.20)
 
 project(OpenGLGraphicsEngine LANGUAGES C CXX)
 
-include(FetchContent)
-
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(ENGINE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/OpenGL")
 set(ENGINE_SRC "${ENGINE_ROOT}/src")
+set(GLFW_DEP_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/Dependencies/GLFW")
+
+if(MSVC)
+    # Prefer the static GLFW library from the checked-in dependency folder.
+    set(GLFW_LIBRARY "${GLFW_DEP_ROOT}/lib-vc2022/glfw3.lib")
+else()
+    message(FATAL_ERROR "Only MSVC prebuilt GLFW linkage is configured in this project.")
+endif()
+
+if(NOT EXISTS "${GLFW_LIBRARY}")
+    message(FATAL_ERROR "Prebuilt GLFW library not found: ${GLFW_LIBRARY}")
+endif()
 
 set(ENGINE_SOURCES
     "${ENGINE_SRC}/Application.cpp"
@@ -36,26 +46,15 @@ set(ENGINE_SOURCES
 )
 
 add_executable(OpenGL ${ENGINE_SOURCES})
-
 target_include_directories(OpenGL PRIVATE
     "${ENGINE_SRC}"
     "${ENGINE_SRC}/vendor"
     "${ENGINE_SRC}/vendor/glad/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/Dependencies/GLFW/include"
 )
-
-set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-
-FetchContent_Declare(
-    glfw
-    GIT_REPOSITORY https://github.com/glfw/glfw.git
-    GIT_TAG 3.4
-)
-FetchContent_MakeAvailable(glfw)
 
 find_package(OpenGL REQUIRED)
-target_link_libraries(OpenGL PRIVATE glfw OpenGL::GL)
+target_link_libraries(OpenGL PRIVATE "${GLFW_LIBRARY}" OpenGL::GL)
 
 if(WIN32)
     target_link_libraries(OpenGL PRIVATE gdi32 user32 shell32)
@@ -66,7 +65,7 @@ set_target_properties(OpenGL PROPERTIES
 )
 
 if(MSVC)
-    set_property(TARGET OpenGL PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+    set_property(TARGET OpenGL PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:OpenGL>")
 endif()
 
 add_custom_command(TARGET OpenGL POST_BUILD
